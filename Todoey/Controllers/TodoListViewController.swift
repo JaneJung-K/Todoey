@@ -11,11 +11,14 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     var itemArray = [Item]()
+    //command + up to Navigate uproot
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.Plist")
     
     let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
         
         let newItem = Item()
         newItem.title = "Find Mike"
@@ -29,9 +32,9 @@ class TodoListViewController: UITableViewController {
         newItem3.title = "Destroy Demogorgon"
         itemArray.append(newItem3)
         
-//        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-//            itemArray = items
-//        }
+        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+            itemArray = items
+        }
         
     }
 
@@ -64,7 +67,7 @@ class TodoListViewController: UITableViewController {
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        tableView.reloadData()
+        saveItems()
         
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -84,23 +87,36 @@ class TodoListViewController: UITableViewController {
             newItem.title = textField.text!
           
             self.itemArray.append(newItem)
+            // Userdefaults only can save standard datatype not a custom data type
+            //self.defaults.setValue(self.itemArray, forKey: "TodoListArray")
             
-            self.defaults.setValue(self.itemArray, forKey: "TodoListArray")
-            
-            self.tableView.reloadData()
-        }
+            self.saveItems()
         
-        alert.addTextField { (alertTextField) in
+            alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
             textField = alertTextField
         }
         
         alert.addAction(action)
         //present가 없으면 alert이 뜨지 않는다
-        present(alert, animated: true, completion: nil)
+            self.present(alert, animated: true, completion: nil)
         
     }
     
     
 }
 
+    //MARK - Model Manupulation Methods
+
+func saveItems() {
+    let encoder = PropertyListEncoder()
+    
+    do {
+        let data = try encoder.encode(itemArray)
+        try data.write(to: dataFilePath!)
+    } catch {
+        print("Error encoding item array, \(error)")
+    }
+    tableView.reloadData()
+}
+}

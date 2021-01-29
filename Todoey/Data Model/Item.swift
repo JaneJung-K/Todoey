@@ -7,8 +7,8 @@
 //
 
 import Foundation
-
-class Item {
+//When It's Encodable Only contains Standard data type not a custom class
+class Item: Encodable {
     var title : String = ""
     var done: Bool = false
 }
