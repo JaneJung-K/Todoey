@@ -12,6 +12,13 @@ import CoreData
 class TodoListViewController: UITableViewController {
 
     var itemArray = [Item]()
+    
+    var seletedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
+    
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
@@ -19,7 +26,6 @@ class TodoListViewController: UITableViewController {
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        loadItems()
         
     }
 
@@ -73,6 +79,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.seletedCategory
             self.itemArray.append(newItem)
             // Userdefaults only can save standard datatype not a custom data type
             //self.defaults.setValue(self.itemArray, forKey: "TodoListArray")
@@ -105,7 +112,15 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
 //External Internal and Default parameter
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", seletedCategory!.name!)
+        
+        if let addtionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, addtionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         
         do {
         itemArray = try context.fetch(request)
@@ -125,13 +140,12 @@ extension TodoListViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let request : NSFetchRequest<Item> = Item.fetchRequest()
-        //https://academy.realm.io/posts/nspredicate-cheatsheet/
-        //https://nshipster.com/nspredicate/
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        //cd: case and diacritic sensitive
+
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+       
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
         
         
     }
