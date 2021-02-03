@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 
 class TodoListViewController: UITableViewController {
-//command+Click = rename var
+
     var todoItems: Results<Item>?
     let realm = try! Realm()
     
@@ -53,6 +53,18 @@ class TodoListViewController: UITableViewController {
     //MARK - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status, \(error)")
+            }
+        }
+        
+        tableView.reloadData()
 
 //        todoItems[indexPath.row].done = todoItems?[indexPath.row].done
 //
@@ -66,7 +78,6 @@ class TodoListViewController: UITableViewController {
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
-        //Scope를 넓혀주는 법
         var textField = UITextField()
         
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
