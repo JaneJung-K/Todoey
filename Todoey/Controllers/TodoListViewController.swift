@@ -15,7 +15,9 @@ class TodoListViewController: SwipeTableViewController {
     var todoItems: Results<Item>?
     let realm = try! Realm()
     
-    var seletedCategory : Category? {
+    @IBOutlet weak var searchBar: UISearchBar!
+    
+    var selectedCategory : Category? {
         didSet{
             loadItems()
         }
@@ -24,9 +26,28 @@ class TodoListViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
         tableView.separatorStyle = .none
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let colourHex = selectedCategory?.colour {
+            
+            title = selectedCategory!.name
+            
+            guard let navBar = navigationController?.navigationBar else {fatalError("Navigation controller does not exist.")}
+            
+            if let navBarColour = UIColor(hexString: colourHex) {
+                navBar.backgroundColor = navBarColour
+                
+                navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+                
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColour, returnFlat: true)]
+                
+                searchBar.barTintColor = navBarColour
+            }
+
+        }
     }
 
     //MARK - Tableview Datasource Methods
@@ -43,7 +64,7 @@ class TodoListViewController: SwipeTableViewController {
         
         cell.textLabel?.text = item.title
             //? Optional chain, If HexsTrint is not nil, go forwards darkend by percentage.
-            if let colour = UIColor(hexString: seletedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
                 
                 cell.backgroundColor = colour
                 cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
@@ -92,7 +113,7 @@ class TodoListViewController: SwipeTableViewController {
             
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
 
-            if let currentCategory = self.seletedCategory {
+            if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
                     let newItem = Item()
@@ -122,7 +143,7 @@ class TodoListViewController: SwipeTableViewController {
 
         func loadItems() {
             
-            todoItems = seletedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+            todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
 
             tableView.reloadData()
         }
